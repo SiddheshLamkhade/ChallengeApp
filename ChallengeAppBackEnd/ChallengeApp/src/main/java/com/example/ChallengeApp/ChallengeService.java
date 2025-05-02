@@ -1,29 +1,28 @@
 package com.example.ChallengeApp;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 @Service
 public class ChallengeService {
-
-	private List<Challenge> challenges = new ArrayList<>();
-	
 	private Long nextId=1L;
 	
-	public ChallengeService() {
-		Challenge challenge1 = new Challenge(1L, "jan", "Learning new programming language");
-		challenges.add(challenge1);
-	}
+	//private List<Challenge> challenges = new ArrayList<>();
+	@Autowired
+	private ChallengeRepository repo; //migrating to database(with the Challenge class) not using list anymore
+	
+	
 	
 	public List<Challenge> getAllChallenges() {
-		return challenges;
+		return repo.findAll();
 	}
 	
 	public boolean addChallenge(Challenge challenge) {
 		if(challenge != null) {
 			challenge.setId(nextId++);
-			challenges.add(challenge);
+			repo.save(challenge);
 			return true;
 		}
 		else {
@@ -32,34 +31,32 @@ public class ChallengeService {
 	}
 
 	public Challenge getChallenge(String month) {
-		for (Challenge challenge : challenges) {
-			if(challenge.getMonth().equals(month)) {
-				return challenge;
-			}
-		}
-		return null;
+		Optional<Challenge> challenge=repo.findByMonthIgnoreCase(month);
+		return challenge.orElse(null);
+		
 	}
 
 	public boolean updateChallenge(Long id, Challenge updatedChallenge) {
-		for (Challenge challenge : challenges) {
-			if(challenge.getId().equals(id)) {
-				challenge.setMonth(updatedChallenge.getMonth());
-				challenge.setDescription(updatedChallenge.getDescription());
-				return true;
-			}
+		Optional<Challenge> challenge=repo.findById(id);
+		if(challenge.isPresent()) {//isPresent() this is a jpa method
+			Challenge challengeToUpdate=challenge.get();//jpa methods
+			challengeToUpdate.setMonth(updatedChallenge.getMonth());
+			challengeToUpdate.setDescription(updatedChallenge.getDescription());
+			repo.save(challengeToUpdate);
+			return true;
+		} else { //isPresent() this is a jpa method
+			return false;
 		}
-		return false;
 	}
 
 	public boolean deleteChallenge(Long id) {
-		return challenges.removeIf( challenge-> challenge.getId().equals(id));
-		//removeIf is method available in List interface 
-		//challenge->challenge.getId().equals(id) ....is Lambda expression (short-cut function)
-		//It checks: "For each challenge, check if its id equals the given id"
-		//equal method returns true
-		//....
-		//return challenges.removeIf(true or false);
-		//challenge-> challenge.getId().equals(id) ......equals return true or false
+		Optional<Challenge> challenge=repo.findById(id);
+		if(challenge.isPresent()) {
+			repo.deleteById(id);
+			return true;
+		} else {
+			return false;
+		}
 	}
 
 }

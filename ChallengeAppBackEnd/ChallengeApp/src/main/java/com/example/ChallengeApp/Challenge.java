@@ -6,6 +6,9 @@ import jakarta.persistence.Id;
 
 @Entity
 public class Challenge {
+	public Challenge() {
+		
+	}//Hibernate gives error if we are using Entity classes and don't create default constructor
 	@Id
 	private Long id;
 	@Column(name="challengeMonth")
